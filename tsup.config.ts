@@ -7,6 +7,9 @@ export default defineConfig([
         entry: {
             index: 'src/index.ts',
             stream: 'src/stream.ts',
+            'web-stream': 'src/web-stream.ts',
+            incremental: 'src/incremental.ts',
+            extract: 'src/extract.ts',
             cli: 'src/cli.ts',
         },
         format: ['cjs', 'esm'],

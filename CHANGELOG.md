@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-30
+
+### Added
+- **Web Streams API** (`./web-stream`): Universal `TransformStream` support for Deno, Bun, Cloudflare Workers and modern browsers.
+  - `jsonRepairStream()` - Standard TransformStream
+  - `jsonRepairChunkedStream()` - Chunked output for large payloads
+- **Incremental Stateful Repair** (`./incremental`): True streaming repair with immediate partial output.
+  - `IncrementalJsonRepair` class with `.push()` and `.end()` methods
+  - `.snapshot()` method to get valid JSON at any point
+  - `.reset()` for reusing instances
+- **LLM Garbage Filtering** (`./extract`): Extract JSON from messy LLM outputs.
+  - `extractJson()` - Extracts first JSON block from prose
+  - `extractAllJson()` - Extracts all JSON blocks
+  - `containsJson()` - Fast heuristic check
+  - `stripLlmWrapper()` - Removes thinking blocks, markdown, common LLM phrases
+
+### Changed
+- Updated Vitest to v4.0.16
+- Added 34 new tests (97 total)
+
 ## [1.1.1] - 2025-12-30
 
 ### Fixed

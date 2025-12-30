@@ -1,9 +1,12 @@
 {
     "name": "@prxtenses/repair-json-stream",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "exports": {
         ".": "./src/index.ts",
-        "./stream": "./src/stream.ts"
+        "./stream": "./src/stream.ts",
+        "./web-stream": "./src/web-stream.ts",
+        "./incremental": "./src/incremental.ts",
+        "./extract": "./src/extract.ts"
     },
     "publish": {
         "include": [

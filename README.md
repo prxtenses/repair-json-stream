@@ -172,6 +172,81 @@ Node.js Transform stream for piping.
 import { jsonrepairTransform } from 'repair-json-stream/stream'
 ```
 
+### Web Streams API
+
+Universal `TransformStream` for Deno, Bun, Cloudflare Workers, and modern browsers.
+
+```js
+import { jsonRepairStream } from 'repair-json-stream/web-stream'
+
+// Use with fetch
+const response = await fetch('/api/llm')
+const repairedStream = response.body
+  .pipeThrough(new TextDecoderStream())
+  .pipeThrough(jsonRepairStream())
+
+// Read repaired JSON
+const reader = repairedStream.getReader()
+const { value } = await reader.read()
+JSON.parse(value) // Always valid!
+```
+
+### Incremental Stateful Repair
+
+True streaming repair with immediate partial output. Perfect for live UI updates.
+
+```js
+import { IncrementalJsonRepair } from 'repair-json-stream/incremental'
+
+const repairer = new IncrementalJsonRepair()
+
+// As LLM streams chunks...
+let output = ''
+for await (const chunk of llmStream) {
+  output += repairer.push(chunk)
+  updateUI(output) // Live update!
+}
+output += repairer.end()
+
+JSON.parse(output) // Always valid!
+```
+
+Methods:
+- `.push(chunk)` - Process chunk, returns repaired output
+- `.end()` - Finalize and close open structures
+- `.snapshot()` - Get valid JSON at any point (non-destructive)
+- `.reset()` - Reset state for reuse
+
+### LLM Garbage Filtering
+
+Extract JSON from messy LLM outputs containing prose, thinking blocks, or markdown.
+
+```js
+import { extractJson, extractAllJson, stripLlmWrapper } from 'repair-json-stream/extract'
+
+// Extract JSON from prose
+extractJson('Sure! Here is the data: {"name": "John"} Hope this helps!')
+// → '{"name": "John"}'
+
+// Handle thinking blocks (DeepSeek, Claude, etc.)
+extractJson('<thought>Let me think...</thought>\n{"result": true}')
+// → '{"result": true}'
+
+// Extract multiple JSON blocks
+extractAllJson('First: {"a": 1} Second: {"b": 2}')
+// → ['{"a": 1}', '{"b": 2}']
+
+// Full cleanup (markdown, prose, thinking blocks)
+stripLlmWrapper(`
+<thinking>reasoning here</thinking>
+\`\`\`json
+{"data": [1, 2, 3]}
+\`\`\`
+Let me know if you need anything else!
+`)
+// → '{"data": [1, 2, 3]}'
+```
+
 ## 🏗️ Architecture
 
 - **O(n) single-pass** - No multiple iterations
