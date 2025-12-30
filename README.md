@@ -117,6 +117,9 @@ cat broken.json | repair-json-stream
 
 # Overwrite in place
 repair-json-stream broken.json --overwrite
+
+# Verbose output (show repair actions)
+repair-json-stream broken.json --verbose
 ```
 
 ### Browser
