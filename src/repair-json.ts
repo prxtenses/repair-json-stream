@@ -126,42 +126,9 @@ const CharTypes = new Uint8Array(256);
   CharTypes[46]! |= CharFlags.ValueStart;
 })();
 
-/**
- * Check if character is a quote (optimized)
- */
-function isQuoteChar(c: number): boolean {
-  if (c < 256) return (CharTypes[c]! & CharFlags.Quote) !== 0;
-  return c === 8220 || c === 8221 || c === 8216 || c === 8217;
-}
 
-/**
- * Check if character can start an identifier (optimized)
- */
-function isIdentifierStart(c: number): boolean {
-  return c < 256 && (CharTypes[c]! & CharFlags.IdStart) !== 0;
-}
 
-/**
- * Check if character can continue an identifier (optimized)
- */
-function isIdentifierChar(c: number): boolean {
-  return c < 256 && (CharTypes[c]! & (CharFlags.IdStart | CharFlags.Digit)) !== 0;
-}
 
-/**
- * Check if character is whitespace (optimized)
- */
-function isWhitespace(c: number): boolean {
-  if (c < 256) return (CharTypes[c]! & CharFlags.Whitespace) !== 0;
-  return c === 8239 || c === 8287 || c === 12288;
-}
-
-/**
- * Check if character starts a literal value (number, boolean, null)
- */
-function isValueStart(c: number): boolean {
-  return c < 256 && (CharTypes[c]! & CharFlags.ValueStart) !== 0;
-}
 
 /**
  * Pre-process input to handle fenced code blocks, JSONP, and escaped JSON.
@@ -184,7 +151,7 @@ export function preprocessJson(input: string): string {
 
   // 1. Strip fenced code blocks (```json ... ```)
   let start = 0;
-  while (start < len && isWhitespace(str.charCodeAt(start))) start++;
+  while (start < len && ((str.charCodeAt(start) < 256 && (CharTypes[str.charCodeAt(start)]! & CharFlags.Whitespace)) || str.charCodeAt(start) === 8239 || str.charCodeAt(start) === 8287 || str.charCodeAt(start) === 12288)) start++;
 
   if (start + 2 < len && str[start] === '`' && str[start + 1] === '`' && str[start + 2] === '`') {
     // Find end of language identifier line
@@ -204,21 +171,22 @@ export function preprocessJson(input: string): string {
     }
     len = str.length;
     start = 0;
-    while (start < len && isWhitespace(str.charCodeAt(start))) start++;
+    while (start < len && ((str.charCodeAt(start) < 256 && (CharTypes[str.charCodeAt(start)]! & CharFlags.Whitespace)) || str.charCodeAt(start) === 8239 || str.charCodeAt(start) === 8287 || str.charCodeAt(start) === 12288)) start++;
   }
 
   // 2. Strip JSONP wrapper (callback({...}) or callback([...]))
-  if (start < len && isIdentifierStart(str.charCodeAt(start))) {
+  if (start < len && (str.charCodeAt(start) < 256 && (CharTypes[str.charCodeAt(start)]! & CharFlags.IdStart) !== 0)) {
     let p = start;
-    while (p < len && isIdentifierChar(str.charCodeAt(p))) p++;
+    while (p < len && (str.charCodeAt(p) < 256 && (CharTypes[str.charCodeAt(p)]! & (CharFlags.IdStart | CharFlags.Digit)) !== 0)) p++;
 
     // Skip whitespace
-    while (p < len && isWhitespace(str.charCodeAt(p))) p++;
+    while (p < len && ((str.charCodeAt(p) < 256 && (CharTypes[str.charCodeAt(p)]! & CharFlags.Whitespace)) || str.charCodeAt(p) === 8239 || str.charCodeAt(p) === 8287 || str.charCodeAt(p) === 12288)) p++;
 
     if (p < len && str[p] === '(') {
       // Could be JSONP! Look for { or [
       let jsonStart = p + 1;
-      while (jsonStart < len && isWhitespace(str.charCodeAt(jsonStart))) jsonStart++;
+      while (jsonStart < len && ((str.charCodeAt(jsonStart) < 256 && (CharTypes[str.charCodeAt(jsonStart)]! & CharFlags.Whitespace)) || str.charCodeAt(jsonStart) === 8239 || str.charCodeAt(jsonStart) === 8287 || str.charCodeAt(jsonStart) === 12288)) jsonStart++;
+
 
       if (jsonStart < len && (str[jsonStart] === '{' || str[jsonStart] === '[')) {
         // It's JSONP - extract content
@@ -227,9 +195,9 @@ export function preprocessJson(input: string): string {
 
         // Strip trailing ); or )
         let end = len - 1;
-        while (end >= 0 && isWhitespace(str.charCodeAt(end))) end--;
+        while (end >= 0 && ((str.charCodeAt(end) < 256 && (CharTypes[str.charCodeAt(end)]! & CharFlags.Whitespace)) || str.charCodeAt(end) === 8239 || str.charCodeAt(end) === 8287 || str.charCodeAt(end) === 12288)) end--;
         if (end >= 0 && str[end] === ';') end--;
-        while (end >= 0 && isWhitespace(str.charCodeAt(end))) end--;
+        while (end >= 0 && ((str.charCodeAt(end) < 256 && (CharTypes[str.charCodeAt(end)]! & CharFlags.Whitespace)) || str.charCodeAt(end) === 8239 || str.charCodeAt(end) === 8287 || str.charCodeAt(end) === 12288)) end--;
         if (end >= 0 && str[end] === ')') end--;
 
         str = str.substring(0, end + 1);
@@ -240,7 +208,8 @@ export function preprocessJson(input: string): string {
 
   // 3. Check for escaped/stringified JSON: starts with {\" or [\"
   let trimStart = 0;
-  while (trimStart < len && isWhitespace(str.charCodeAt(trimStart))) trimStart++;
+  while (trimStart < len && ((str.charCodeAt(trimStart) < 256 && (CharTypes[str.charCodeAt(trimStart)]! & CharFlags.Whitespace)) || str.charCodeAt(trimStart) === 8239 || str.charCodeAt(trimStart) === 8287 || str.charCodeAt(trimStart) === 12288)) trimStart++;
+
 
   if (trimStart + 1 < len) {
     const first = str[trimStart];
@@ -403,7 +372,7 @@ export function repairJson(input: string): string {
       } else if (char === '\\') {
         output[outIdx++] = char;
         escaped = true;
-      } else if (c === stringQuote.charCodeAt(0) || (stringQuote !== '"' && isQuoteChar(c))) {
+      } else if (c === stringQuote.charCodeAt(0) || (stringQuote !== '"' && ((c < 256 && (CharTypes[c]! & CharFlags.Quote) !== 0) || c === 8220 || c === 8221 || c === 8216 || c === 8217))) {
         // End of string - always output as double quote
         output[outIdx++] = '"';
         inString = false;
@@ -426,7 +395,7 @@ export function repairJson(input: string): string {
 
     // === Inside an unquoted key or identifier ===
     if (inUnquotedKey) {
-      if (isIdentifierChar(c)) {
+      if ((c < 256 && (CharTypes[c]! & (CharFlags.IdStart | CharFlags.Digit)) !== 0)) {
         unquotedKey += char;
         continue;
       } else {
@@ -511,8 +480,8 @@ export function repairJson(input: string): string {
     }
 
     // === Whitespace ===
-    if (isWhitespace(c)) {
-      output[outIdx++] = ' '; // normalize to regular space
+    if (c < 256 && (CharTypes[c]! & CharFlags.Whitespace) !== 0) {
+      output[outIdx++] = ' ';
       continue;
     }
 
@@ -530,7 +499,9 @@ export function repairJson(input: string): string {
     }
 
     // Reset justClosedString for non-special chars
-    if (char !== '"' && char !== "'" && !isQuoteChar(c) && !isWhitespace(c)) {
+    // Optimized check: quote or whitespace
+    if (char !== '"' && char !== "'" &&
+      !(c < 256 && (CharTypes[c]! & (CharFlags.Quote | CharFlags.Whitespace)) !== 0)) {
       justClosedString = false;
     }
 
@@ -682,7 +653,8 @@ export function repairJson(input: string): string {
 
       default:
         // Check for special Unicode quotes
-        if (isQuoteChar(c)) {
+        // isQuoteChar inlined: c < 256 ? (CharTypes[c] & CharFlags.Quote) : (c === 8220 || c === 8221 || c === 8216 || c === 8217)
+        if ((c < 256 && (CharTypes[c]! & CharFlags.Quote) !== 0) || (c === 8220 || c === 8221 || c === 8216 || c === 8217)) {
           if (justClosedString) {
             if (outIdx > 0 && output[outIdx - 1] === '"') outIdx--;
             inString = true;
@@ -704,7 +676,8 @@ export function repairJson(input: string): string {
         }
 
         // Check for unquoted key (when expecting key in object)
-        if (expectingKeyOrEnd && isIdentifierStart(c)) {
+        // isIdentifierStart inlined
+        if (expectingKeyOrEnd && c < 256 && (CharTypes[c]! & CharFlags.IdStart) !== 0) {
           inUnquotedKey = true;
           unquotedKey = char;
           justClosedString = false;
@@ -712,7 +685,12 @@ export function repairJson(input: string): string {
         }
 
         // Start of a literal or number value (or maybe MongoDB wrapper)
-        if (isValueStart(c) || (isIdentifierStart(c) && !expectingKeyOrEnd)) {
+        // isModelStart || isIdentifierStart
+        if ((c < 256 && (CharTypes[c]! & (CharFlags.ValueStart | CharFlags.IdStart)) !== 0)) {
+          // If expectingKeyOrEnd is true, and it's an IdentifierStart, we already handled it above in unquoted key block
+          // So this block handles ValueStart OR (IdentifierStart when NOT expecting key)
+          // But wait, the previous block breaks. So if we are here, and it is IdentifierStart, then expectingKeyOrEnd MUST be false.
+          // Correct.
           output[outIdx++] = char;
           currentValue = char;
           inValue = true;

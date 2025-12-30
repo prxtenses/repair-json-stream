@@ -7,7 +7,7 @@
  * Run: node benchmark.cjs
  */
 
-const { repairJson } = require('./dist/index.cjs');
+const { repairJson } = require('../dist/index.cjs');
 
 let jsonrepair;
 try {

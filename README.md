@@ -37,9 +37,9 @@ Built for real-time streaming. **1.9x faster** than alternatives.
 ┌────────────────────┬────────────────────┬────────────┬─────────┐
 │ Benchmark          │ repair-json-stream │ jsonrepair │ Speedup │
 ├────────────────────┼────────────────────┼────────────┼─────────┤
-│ Small (15 KB)      │ 0.9 ms             │ 2.6 ms     │ 2.9x    │
-│ Large (3.9 MB)     │ 309 ms             │ 421 ms     │ 1.4x    │
-│ Streaming (1K ops) │ 366 ms             │ 681 ms     │ 1.9x    │
+│ Small (15 KB)      │ 0.85 ms            │ 1.53 ms    │ 1.8x    │
+│ Large (3.9 MB)     │ 295 ms             │ 392 ms     │ 1.3x    │
+│ Streaming (1K ops) │ 426 ms             │ 583 ms     │ 1.4x    │
 └────────────────────┴────────────────────┴────────────┴─────────┘
 ```
 
