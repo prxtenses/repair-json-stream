@@ -1,6 +1,17 @@
 /**
- * Streaming API for repair-json-stream
- * Node.js Transform stream that repairs JSON on-the-fly
+ * Streaming API for repair-json-stream.
+ * 
+ * Node.js Transform stream that repairs JSON on-the-fly.
+ * 
+ * @module
+ * 
+ * @example
+ * ```ts
+ * import { jsonrepairTransform } from 'repair-json-stream/stream';
+ * import { pipeline } from 'stream';
+ * 
+ * pipeline(inputStream, jsonrepairTransform(), outputStream, callback);
+ * ```
  */
 
 import { Transform, TransformCallback, TransformOptions } from 'stream';
