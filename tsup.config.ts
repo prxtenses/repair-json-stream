@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup';
+import { version } from './package.json';
 
 export default defineConfig([
     // Main builds (CJS + ESM)
@@ -18,6 +19,9 @@ export default defineConfig([
         splitting: false,
         treeshake: true,
         shims: true,
+        define: {
+            'process.env.npm_package_version': JSON.stringify(version),
+        },
         banner: {
             js: '// repair-json-stream - High-performance JSON repair',
         },

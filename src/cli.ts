@@ -67,7 +67,7 @@ Examples:
 
 // Show version
 if (showVersion) {
-  console.log('1.0.0');
+  console.log(process.env.npm_package_version || '1.0.0');
   process.exit(0);
 }
 
