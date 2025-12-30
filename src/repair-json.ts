@@ -64,52 +64,103 @@ const MONGO_WRAPPERS = new Set([
 ]);
 
 /**
- * Check if character is a quote (single, double, or special Unicode quotes)
+ * Character classification flags
+ */
+const enum CharFlags {
+  None = 0,
+  Whitespace = 1 << 0,
+  Quote = 1 << 1,
+  IdStart = 1 << 2,
+  Digit = 1 << 3,
+  ValueStart = 1 << 4, // t, f, n, T, F, N, -, .
+}
+
+/**
+ * Optimized lookup table for ASCII characters (0-255)
+ * Faster than multiple comparisons/branches
+ */
+const CharTypes = new Uint8Array(256);
+
+// Initialize lookup table
+(function initCharTypes() {
+  // Whitespace: \t, \n, \r, space
+  CharTypes[9]! |= CharFlags.Whitespace;
+  CharTypes[10]! |= CharFlags.Whitespace;
+  CharTypes[13]! |= CharFlags.Whitespace;
+  CharTypes[32]! |= CharFlags.Whitespace;
+  CharTypes[160]! |= CharFlags.Whitespace; // non-breaking space
+
+  // Quotes: " '
+  CharTypes[34]! |= CharFlags.Quote;
+  CharTypes[39]! |= CharFlags.Quote;
+
+  // Digits: 0-9
+  for (let c = 48; c <= 57; c++) {
+    CharTypes[c]! |= CharFlags.Digit | CharFlags.ValueStart;
+  }
+
+  // A-Z
+  for (let c = 65; c <= 90; c++) {
+    CharTypes[c]! |= CharFlags.IdStart;
+    // T, F, N (True, False, None)
+    if (c === 84 || c === 70 || c === 78) {
+      CharTypes[c]! |= CharFlags.ValueStart;
+    }
+  }
+
+  // a-z
+  for (let c = 97; c <= 122; c++) {
+    CharTypes[c]! |= CharFlags.IdStart;
+    // t, f, n (true, false, null)
+    if (c === 116 || c === 102 || c === 110) {
+      CharTypes[c]! |= CharFlags.ValueStart;
+    }
+  }
+
+  // _, $
+  CharTypes[95]! |= CharFlags.IdStart;
+  CharTypes[36]! |= CharFlags.IdStart;
+
+  // -, . (Value starters)
+  CharTypes[45]! |= CharFlags.ValueStart;
+  CharTypes[46]! |= CharFlags.ValueStart;
+})();
+
+/**
+ * Check if character is a quote (optimized)
  */
 function isQuoteChar(c: number): boolean {
-  return (
-    c === 34 || // "
-    c === 39 || // '
-    c === 8220 || // "
-    c === 8221 || // "
-    c === 8216 || // '
-    c === 8217
-  ); // '
+  if (c < 256) return (CharTypes[c]! & CharFlags.Quote) !== 0;
+  return c === 8220 || c === 8221 || c === 8216 || c === 8217;
 }
 
 /**
- * Check if character can start an identifier (for unquoted keys)
+ * Check if character can start an identifier (optimized)
  */
 function isIdentifierStart(c: number): boolean {
-  return (
-    (c >= 65 && c <= 90) || // A-Z
-    (c >= 97 && c <= 122) || // a-z
-    c === 95 || // _
-    c === 36
-  ); // $
+  return c < 256 && (CharTypes[c]! & CharFlags.IdStart) !== 0;
 }
 
 /**
- * Check if character can continue an identifier
+ * Check if character can continue an identifier (optimized)
  */
 function isIdentifierChar(c: number): boolean {
-  return isIdentifierStart(c) || (c >= 48 && c <= 57); // + 0-9
+  return c < 256 && (CharTypes[c]! & (CharFlags.IdStart | CharFlags.Digit)) !== 0;
 }
 
 /**
- * Check if character is whitespace
+ * Check if character is whitespace (optimized)
  */
 function isWhitespace(c: number): boolean {
-  return (
-    c === 32 ||
-    c === 9 ||
-    c === 10 ||
-    c === 13 || // space, tab, LF, CR
-    c === 160 || // non-breaking space
-    c === 8239 || // narrow no-break space
-    c === 8287 || // medium mathematical space
-    c === 12288
-  ); // ideographic space
+  if (c < 256) return (CharTypes[c]! & CharFlags.Whitespace) !== 0;
+  return c === 8239 || c === 8287 || c === 12288;
+}
+
+/**
+ * Check if character starts a literal value (number, boolean, null)
+ */
+function isValueStart(c: number): boolean {
+  return c < 256 && (CharTypes[c]! & CharFlags.ValueStart) !== 0;
 }
 
 /**
@@ -404,17 +455,13 @@ export function repairJson(input: string): string {
 
     // === Inside a literal/number value ===
     if (inValue) {
-      const isValueChar =
-        (c >= 48 && c <= 57) || // 0-9
-        c === 46 ||
-        c === 101 ||
-        c === 69 ||
-        c === 43 ||
-        c === 45 || // . e E + -
-        (c >= 97 && c <= 122) || // a-z
-        (c >= 65 && c <= 90); // A-Z (for True, False, None)
-
-      if (isValueChar) {
+      // Optimized check: 0-9, ., -, +, e, E, a-z, A-Z
+      // We include _, $ from IdStart but that's harmless for value accumulation
+      if (c < 256 && (CharTypes[c]! & (CharFlags.Digit | CharFlags.ValueStart | CharFlags.IdStart)) !== 0) {
+        currentValue += char;
+        output[outIdx++] = char;
+        continue;
+      } else if (c === 43) { // + is not in lookup table to avoid conflict, handle explicitly
         currentValue += char;
         output[outIdx++] = char;
         continue;
@@ -665,17 +712,7 @@ export function repairJson(input: string): string {
         }
 
         // Start of a literal or number value (or maybe MongoDB wrapper)
-        if (
-          char === 't' ||
-          char === 'f' ||
-          char === 'n' ||
-          char === 'T' ||
-          char === 'F' ||
-          char === 'N' || // Python constants
-          char === '-' ||
-          (c >= 48 && c <= 57) || // 0-9
-          (isIdentifierStart(c) && !expectingKeyOrEnd) // Could be MongoDB wrapper
-        ) {
+        if (isValueStart(c) || (isIdentifierStart(c) && !expectingKeyOrEnd)) {
           output[outIdx++] = char;
           currentValue = char;
           inValue = true;
