@@ -236,6 +236,7 @@ export function preprocessJson(input: string): string {
  * Designed for LLM streaming where JSON may be cut off mid-generation.
  *
  * @param input - The incomplete/malformed JSON string to repair
+ * @param onRepair - Optional callback to listen for repair actions
  * @returns A valid, parseable JSON string (or empty string for empty input)
  *
  * @example
@@ -288,7 +289,19 @@ export function preprocessJson(input: string): string {
  * repairJson('{"a": 1}\n{"b": 2}')
  * // => '[{"a": 1},{"b": 2}]'
  */
-export function repairJson(input: string): string {
+export type RepairAction =
+  | 'inserted_quote'       // Added " around unquoted key
+  | 'closed_string'        // Added " to close string
+  | 'closed_object'        // Added }
+  | 'closed_array'         // Added ]
+  | 'inserted_value'       // Added null/true/false
+  | 'missing_comma'        // Added ,
+  | 'removed_comma'        // Removed trailing comma
+  | 'fixed_literal'        // Tru -> true
+  | 'unescaped_char'       // Cleaned up escape sequence
+  | 'synthetic_key';       // Added "_": for nested object
+
+export function repairJson(input: string, onRepair?: (action: RepairAction, index: number, context: string) => void): string {
   if (!input || input.trim().length === 0) {
     return '';
   }
@@ -409,6 +422,7 @@ export function repairJson(input: string): string {
         }
 
         // End of unquoted key - output as quoted string
+        if (onRepair) onRepair('inserted_quote', i, `Wrapped unquoted key "${unquotedKey}"`);
         output[outIdx++] = '"';
         for (let j = 0; j < unquotedKey.length; j++) {
           output[outIdx++] = unquotedKey[j]!;
@@ -451,6 +465,7 @@ export function repairJson(input: string): string {
         const completion = INCOMPLETE_LITERALS[currentValue];
         if (completion) {
           // Replace with complete literal
+          if (onRepair) onRepair('fixed_literal', i, `Fixed incomplete literal "${currentValue}" -> "${INCOMPLETE_LITERALS[currentValue]}"`);
           outIdx -= currentValue.length;
           for (let j = 0; j < completion.length; j++) {
             output[outIdx++] = completion[j]!;
@@ -510,6 +525,7 @@ export function repairJson(input: string): string {
       case '{':
         // Check for NDJSON: multiple root elements
         if (stack.length === 0 && rootElementCount > 0) {
+          if (onRepair) onRepair('missing_comma', i, 'Adding comma between root elements');
           output[outIdx++] = ','; // Add comma between root elements
         }
         // If we're in an object expecting a value, this is a nested object - that's valid
@@ -520,6 +536,7 @@ export function repairJson(input: string): string {
           stack[stack.length - 1] === ContextType.OBJECT
         ) {
           // Add synthetic key for nested object
+          if (onRepair) onRepair('synthetic_key', i, 'Adding synthetic key "_" for nested object');
           output[outIdx++] = '"';
           output[outIdx++] = '_';
           output[outIdx++] = '"';
@@ -541,6 +558,7 @@ export function repairJson(input: string): string {
 
         // If we just had a key with no value, add null
         if (needsColon) {
+          if (onRepair) onRepair('inserted_value', i, 'Adding null value for single key');
           output[outIdx++] = ':';
           output[outIdx++] = 'n';
           output[outIdx++] = 'u';
@@ -564,6 +582,7 @@ export function repairJson(input: string): string {
       case '[':
         // Check for NDJSON
         if (stack.length === 0 && rootElementCount > 0) {
+          if (onRepair) onRepair('missing_comma', i, 'Adding comma between root elements');
           output[outIdx++] = ',';
         }
         output[outIdx++] = char;
@@ -708,12 +727,14 @@ export function repairJson(input: string): string {
 
   // Complete any pending unquoted key
   if (inUnquotedKey && unquotedKey) {
+    if (onRepair) onRepair('inserted_quote', len, `Wrapped unquoted key "${unquotedKey}"`);
     output[outIdx++] = '"';
     for (let j = 0; j < unquotedKey.length; j++) {
       output[outIdx++] = unquotedKey[j]!;
     }
     output[outIdx++] = '"';
     output[outIdx++] = ':';
+    if (onRepair) onRepair('inserted_value', len, 'Adding null value for pending key');
     output[outIdx++] = 'n';
     output[outIdx++] = 'u';
     output[outIdx++] = 'l';
@@ -724,6 +745,7 @@ export function repairJson(input: string): string {
   if (inValue && currentValue) {
     const completion = INCOMPLETE_LITERALS[currentValue];
     if (completion) {
+      if (onRepair) onRepair('fixed_literal', len, `Fixed incomplete literal "${currentValue}" -> "${completion}"`);
       outIdx -= currentValue.length;
       for (let j = 0; j < completion.length; j++) {
         output[outIdx++] = completion[j]!;
@@ -740,6 +762,7 @@ export function repairJson(input: string): string {
     stack.pop();
 
     if (inObjectKey || expectingKeyOrEnd) {
+      if (onRepair) onRepair('inserted_value', len, 'Adding null value for hanging key');
       output[outIdx++] = ':';
       output[outIdx++] = 'n';
       output[outIdx++] = 'u';
@@ -751,6 +774,7 @@ export function repairJson(input: string): string {
 
   // If a key just finished but no colon came
   if (needsColon) {
+    if (onRepair) onRepair('inserted_value', len, 'Adding null value for single key');
     output[outIdx++] = ':';
     output[outIdx++] = 'n';
     output[outIdx++] = 'u';
@@ -767,6 +791,7 @@ export function repairJson(input: string): string {
       lastNonWs--;
     }
     if (lastNonWs >= 0 && output[lastNonWs] === ':') {
+      if (onRepair) onRepair('inserted_value', len, 'Adding null value after colon');
       output[outIdx++] = 'n';
       output[outIdx++] = 'u';
       output[outIdx++] = 'l';
@@ -781,9 +806,11 @@ export function repairJson(input: string): string {
   while (stack.length > 0) {
     const ctx = stack.pop();
     if (ctx === ContextType.OBJECT) {
+      if (onRepair) onRepair('closed_object', len, 'Closing missing }');
       output[outIdx++] = '}';
       if (stack.length === 0) rootElementCount++;
     } else if (ctx === ContextType.ARRAY) {
+      if (onRepair) onRepair('closed_array', len, 'Closing missing ]');
       output[outIdx++] = ']';
       if (stack.length === 0) rootElementCount++;
     }

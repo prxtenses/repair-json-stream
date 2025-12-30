@@ -24,6 +24,7 @@ let outputFile: string | undefined;
 let overwrite = false;
 let showHelp = false;
 let showVersion = false;
+let verbose = false;
 
 for (let i = 0; i < args.length; i++) {
   const arg = args[i]!;
@@ -36,6 +37,8 @@ for (let i = 0; i < args.length; i++) {
     outputFile = args[++i];
   } else if (arg === '--overwrite') {
     overwrite = true;
+  } else if (arg === '--verbose') {
+    verbose = true;
   } else if (!arg.startsWith('-')) {
     inputFile = arg;
   }
@@ -55,6 +58,7 @@ Options:
   --overwrite          Overwrite the input file
   -h, --help           Show this help
   -v, --version        Show version
+  --verbose            Show repair actions (stderr)
 
 Examples:
   repair-json-stream broken.json                    # Repair to stdout
@@ -86,7 +90,13 @@ async function main() {
     process.exit(1);
   }
 
-  const repaired = repairJson(input);
+  const repairCallback = verbose
+    ? (action: string, index: number, context: string) => {
+      console.error(`[Repair] ${action} at ${index}: ${context}`);
+    }
+    : undefined;
+
+  const repaired = repairJson(input, repairCallback);
 
   if (overwrite && inputFile) {
     writeFileSync(inputFile, repaired, 'utf-8');

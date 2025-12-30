@@ -141,6 +141,17 @@ repairJson("{'b': None}")   // '{"b": null}'
 repairJson('[1, 2,')        // '[1, 2]'
 ```
 
+### `repairJson(input, onRepair?)`
+
+Track what was fixed using the callback:
+
+```js
+repairJson('{"a": 1,', (action, idx, context) => {
+  console.log(`Action: ${action} at index ${idx} (${context})`)
+})
+// Output: Action: closed_object at index 7 (Closing missing })
+```
+
 ### `preprocessJson(input: string): string`
 
 Strips wrappers (fenced blocks, JSONP, escaped strings) before repair.
