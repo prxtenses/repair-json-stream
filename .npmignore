@@ -10,7 +10,6 @@ vitest.config.ts
 benchmark.cjs
 debug.cjs
 *.test.ts
-FULL_SOURCE_CODE.txt
 
 # CI/CD
 .github/
