@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2024-12-29
+## [1.1.1] - 2025-12-30
+
+### Fixed
+- Synced documentation between GitHub and JSR.
+- Updated README with missing CLI verbose flag documentation.
+
+## [1.1.0] - 2025-12-30
+
+### Added
+- **Observability Callback**: Added optional `onRepair` callback to `repairJson` to track granular repair actions (e.g., `inserted_quote`, `fixed_literal`, `closed_object`).
+- **CLI Verbose Mode**: Added `--verbose` flag to the CLI tool to log repair actions to `stderr` in real-time.
+- New test suite `src/observability.test.ts` to verify repair event tracking.
+
+## [1.0.4] - 2025-12-30
+
+### Changed
+- **Performance Optimization**: Achieved ~30-50% speedup by inlining character classification checks and using an optimized `CharTypes` bitmask lookup table.
+- Internal: Moved benchmark scripts to a dedicated `benchmarks/` directory.
+
+### Fixed
+- `ReferenceError: end is not defined` in `preprocessJson` during JSONP stripping.
+- Incorrect trailing character stripping in JSONP wrappers.
+
+## [1.0.0] - 2025-12-29
 
 ### Added
 - Core `repairJson()` function for repairing incomplete JSON
