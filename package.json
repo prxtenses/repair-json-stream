@@ -51,6 +51,10 @@
         "jsonrepair",
         "fix-json"
     ],
+    "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/prxtenses"
+    },
     "author": "sonka",
     "license": "MIT",
     "repository": {
