@@ -1,0 +1,15 @@
+{
+    "name": "@prxtenses/repair-json-stream",
+    "version": "1.0.0",
+    "exports": {
+        ".": "./src/index.ts",
+        "./stream": "./src/stream.ts"
+    },
+    "publish": {
+        "include": [
+            "src/**/*.ts",
+            "README.md",
+            "LICENSE"
+        ]
+    }
+}

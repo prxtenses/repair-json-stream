@@ -1,0 +1,24 @@
+# Source files (only dist/ gets published via "files" in package.json)
+src/
+
+# Config files
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+
+# Development/test files
+benchmark.cjs
+debug.cjs
+*.test.ts
+FULL_SOURCE_CODE.txt
+
+# CI/CD
+.github/
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+coverage/
+*.log
