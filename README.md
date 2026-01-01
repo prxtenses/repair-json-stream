@@ -1,4 +1,5 @@
 <p align="center">
+  <img src="https://i.imgur.com/ed9K0Su.png" alt="Alt text" width="200" height="150">
   <h1 align="center">repair-json-stream</h1>
   <p align="center">
     <strong>Blazing-fast JSON repair for LLM streaming</strong>
