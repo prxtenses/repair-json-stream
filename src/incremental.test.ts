@@ -119,4 +119,103 @@ describe('Incremental JSON Repair', () => {
         expect(() => JSON.parse(output)).not.toThrow();
         expect(JSON.parse(output).key).toBe('value');
     });
+
+    describe('Whitespace Preservation', () => {
+        it('should preserve newlines in JSON', () => {
+            const repairer = new IncrementalJsonRepair();
+            const input = '{\n  "key": "value"\n}';
+            
+            const output = repairer.push(input) + repairer.end();
+            
+            expect(output).toBe(input);
+            expect(output).toContain('\n');
+            expect(() => JSON.parse(output)).not.toThrow();
+        });
+
+        it('should preserve leading and trailing newlines', () => {
+            const repairer = new IncrementalJsonRepair();
+            const input = '\n{"key": "value"}\n';
+            
+            const output = repairer.push(input) + repairer.end();
+            
+            expect(output).toBe(input);
+            expect(output.startsWith('\n')).toBe(true);
+            expect(output.endsWith('\n')).toBe(true);
+        });
+
+        it('should preserve newlines across chunks', () => {
+            const repairer = new IncrementalJsonRepair();
+            const chunks = ['\n{"key"', ': "value"}\n'];
+            
+            let output = '';
+            for (const chunk of chunks) {
+                output += repairer.push(chunk);
+            }
+            output += repairer.end();
+            
+            const expectedInput = chunks.join('');
+            expect(output).toBe(expectedInput);
+            expect(output.startsWith('\n')).toBe(true);
+            expect(output.endsWith('\n')).toBe(true);
+        });
+
+        it('should preserve a single newline', () => {
+            const repairer = new IncrementalJsonRepair();
+            const input = '\n';
+            
+            const output = repairer.push(input) + repairer.end();
+            
+            expect(output).toBe(input);
+        });
+
+        it('should preserve tabs', () => {
+            const repairer = new IncrementalJsonRepair();
+            const input = '{\t"key":\t"value"\t}';
+            
+            const output = repairer.push(input) + repairer.end();
+            
+            expect(output).toBe(input);
+            expect(output).toContain('\t');
+            expect(() => JSON.parse(output)).not.toThrow();
+        });
+
+        it('should preserve carriage returns', () => {
+            const repairer = new IncrementalJsonRepair();
+            const input = '{\r\n  "key": "value"\r\n}';
+            
+            const output = repairer.push(input) + repairer.end();
+            
+            expect(output).toBe(input);
+            expect(output).toContain('\r\n');
+            expect(() => JSON.parse(output)).not.toThrow();
+        });
+
+        it('should preserve escaped newlines in string values', () => {
+            const repairer = new IncrementalJsonRepair();
+            const input = '{"text": "line1\\nline2"}';
+            
+            const output = repairer.push(input) + repairer.end();
+            
+            expect(output).toBe(input);
+            expect(() => JSON.parse(output)).not.toThrow();
+            expect(JSON.parse(output).text).toBe('line1\nline2');
+        });
+
+        it('should preserve pretty-printed JSON formatting', () => {
+            const repairer = new IncrementalJsonRepair();
+            const input = `{
+    "name": "test",
+    "items": [
+        1,
+        2,
+        3
+    ]
+}`;
+            
+            const output = repairer.push(input) + repairer.end();
+            
+            expect(output).toBe(input);
+            expect(() => JSON.parse(output)).not.toThrow();
+        });
+    });
 });
