@@ -16,7 +16,4 @@
 
 // Main repair function
 export { repairJson, preprocessJson } from './repair-json.js';
-
-// Streaming API
-export { jsonrepairTransform, createJsonRepairTransform } from './stream.js';
-export type { JsonRepairTransformOptions } from './stream.js';
+export type { RepairAction } from './repair-json.js';

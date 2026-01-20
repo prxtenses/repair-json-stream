@@ -1,110 +1,110 @@
-{
-    "name": "repair-json-stream",
-    "version": "1.2.0",
-    "description": "High-performance, zero-dependency utility for repairing incomplete/malformed JSON strings from streaming LLM responses",
-    "type": "module",
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "bin": {
-        "repair-json-stream": "./dist/cli.js"
-    },
-    "exports": {
-        ".": {
-            "import": {
-                "types": "./dist/index.d.ts",
-                "default": "./dist/index.js"
+    {
+        "name": "repair-json-stream",
+        "version": "1.3.0",
+        "description": "High-performance, zero-dependency utility for repairing incomplete/malformed JSON strings from streaming LLM responses",
+        "type": "module",
+        "main": "./dist/index.cjs",
+        "module": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "bin": {
+            "repair-json-stream": "./dist/cli.js"
+        },
+        "exports": {
+            ".": {
+                "import": {
+                    "types": "./dist/index.d.ts",
+                    "default": "./dist/index.js"
+                },
+                "require": {
+                    "types": "./dist/index.d.cts",
+                    "default": "./dist/index.cjs"
+                }
             },
-            "require": {
-                "types": "./dist/index.d.cts",
-                "default": "./dist/index.cjs"
+            "./stream": {
+                "import": {
+                    "types": "./dist/stream.d.ts",
+                    "default": "./dist/stream.js"
+                },
+                "require": {
+                    "types": "./dist/stream.d.cts",
+                    "default": "./dist/stream.cjs"
+                }
+            },
+            "./web-stream": {
+                "import": {
+                    "types": "./dist/web-stream.d.ts",
+                    "default": "./dist/web-stream.js"
+                },
+                "require": {
+                    "types": "./dist/web-stream.d.cts",
+                    "default": "./dist/web-stream.cjs"
+                }
+            },
+            "./incremental": {
+                "import": {
+                    "types": "./dist/incremental.d.ts",
+                    "default": "./dist/incremental.js"
+                },
+                "require": {
+                    "types": "./dist/incremental.d.cts",
+                    "default": "./dist/incremental.cjs"
+                }
+            },
+            "./extract": {
+                "import": {
+                    "types": "./dist/extract.d.ts",
+                    "default": "./dist/extract.js"
+                },
+                "require": {
+                    "types": "./dist/extract.d.cts",
+                    "default": "./dist/extract.cjs"
+                }
             }
         },
-        "./stream": {
-            "import": {
-                "types": "./dist/stream.d.ts",
-                "default": "./dist/stream.js"
-            },
-            "require": {
-                "types": "./dist/stream.d.cts",
-                "default": "./dist/stream.cjs"
-            }
+        "files": [
+            "dist"
+        ],
+        "scripts": {
+            "build": "tsup",
+            "test": "vitest run",
+            "test:watch": "vitest",
+            "prepublishOnly": "npm run build"
         },
-        "./web-stream": {
-            "import": {
-                "types": "./dist/web-stream.d.ts",
-                "default": "./dist/web-stream.js"
-            },
-            "require": {
-                "types": "./dist/web-stream.d.cts",
-                "default": "./dist/web-stream.cjs"
-            }
+        "keywords": [
+            "json",
+            "repair",
+            "stream",
+            "llm",
+            "openai",
+            "anthropic",
+            "streaming",
+            "jsonrepair",
+            "fix-json"
+        ],
+        "funding": {
+            "type": "github",
+            "url": "https://github.com/sponsors/prxtenses"
         },
-        "./incremental": {
-            "import": {
-                "types": "./dist/incremental.d.ts",
-                "default": "./dist/incremental.js"
-            },
-            "require": {
-                "types": "./dist/incremental.d.cts",
-                "default": "./dist/incremental.cjs"
-            }
+        "author": "sonka",
+        "license": "MIT",
+        "repository": {
+            "type": "git",
+            "url": "git+https://github.com/prxtenses/repair-json-stream.git"
         },
-        "./extract": {
-            "import": {
-                "types": "./dist/extract.d.ts",
-                "default": "./dist/extract.js"
-            },
-            "require": {
-                "types": "./dist/extract.d.cts",
-                "default": "./dist/extract.cjs"
-            }
+        "bugs": {
+            "url": "https://github.com/prxtenses/repair-json-stream/issues"
+        },
+        "homepage": "https://github.com/prxtenses/repair-json-stream#readme",
+        "sideEffects": false,
+        "devDependencies": {
+            "@types/node": "^22.0.0",
+            "fast-check": "^3.0.0",
+            "jsonrepair": "^3.13.1",
+            "tsup": "^8.0.0",
+            "typescript": "^5.3.0",
+            "vitest": "^4.0.16"
+        },
+        "engines": {
+            "node": ">=18"
         }
-    },
-    "files": [
-        "dist"
-    ],
-    "scripts": {
-        "build": "tsup",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "prepublishOnly": "npm run build"
-    },
-    "keywords": [
-        "json",
-        "repair",
-        "stream",
-        "llm",
-        "openai",
-        "anthropic",
-        "streaming",
-        "jsonrepair",
-        "fix-json"
-    ],
-    "funding": {
-        "type": "github",
-        "url": "https://github.com/sponsors/prxtenses"
-    },
-    "author": "sonka",
-    "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/prxtenses/repair-json-stream.git"
-    },
-    "bugs": {
-        "url": "https://github.com/prxtenses/repair-json-stream/issues"
-    },
-    "homepage": "https://github.com/prxtenses/repair-json-stream#readme",
-    "sideEffects": false,
-    "devDependencies": {
-        "@types/node": "^22.0.0",
-        "fast-check": "^3.0.0",
-        "jsonrepair": "^3.13.1",
-        "tsup": "^8.0.0",
-        "typescript": "^5.3.0",
-        "vitest": "^4.0.16"
-    },
-    "engines": {
-        "node": ">=18"
     }
-}
