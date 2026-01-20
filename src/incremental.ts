@@ -233,9 +233,9 @@ export class IncrementalJsonRepair {
                 if (next === '*') { this.inMultiLineComment = true; i++; continue; }
             }
 
-            // Whitespace
+            // Whitespace - preserve original character (newlines, tabs, etc.)
             if ((CharTypes[c]! & CharFlags.Whitespace) !== 0) {
-                output.push(' ');
+                output.push(char);
                 continue;
             }
 
